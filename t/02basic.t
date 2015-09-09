@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 use Test::More;
+use Test::Deep;
 use Redis::ScriptCache;
 use Redis;
 
@@ -85,5 +86,5 @@ $res = $cache->run_script('test', [0]);
 is($res, 2, "run script with args works");
 
 my @script_names = $cache->register_all_scripts();
-is_deeply(\@script_names, [ 'test2', 'test' ], "load_scripts works for good scripts");
+cmp_deeply(\@script_names, bag( 'test2', 'test' ), "load_scripts works for good scripts");
 
