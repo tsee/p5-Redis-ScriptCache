@@ -24,7 +24,7 @@ sub new {
     $self->{_script_cache} = {};
     # redis_conn is compulsory
     $self->redis_conn
-        or croak("Need Redis connection");
+        or croak('Need Redis connection');
     # canonicalize script_dir
     $self->_set_script_dir;
 
@@ -47,12 +47,12 @@ sub register_all_scripts {
         if $args{script_dir};
 
     if ( $self->script_dir ) {
-        for my $file (glob($self->script_dir . "/*.lua")) {
+        for my $file (glob($self->script_dir . '/*.lua')) {
             $self->register_file(basename($file));
         }
         return $self->scripts;
     } else {
-        croak("No script_dir specified");
+        croak('No script_dir specified');
     }
 }
 
@@ -62,7 +62,12 @@ sub register_script {
     return $script_name
         if exists $self->{_script_cache}->{$script_name};
 
-    my $sha = $self->redis_conn->script_load($$script_ref);
+    eval {
+        my $sha = $self->redis_conn->script_load($$script_ref);
+        1;
+    } or do {
+        croak("redis script_load failed: $@");
+    };
     $self->{_script_cache}->{$script_name} = $sha;
 
     return $script_name;
@@ -76,7 +81,15 @@ sub run_script {
 
     croak("Unknown script $script_name") if !$sha;
 
-    return $conn->evalsha($sha, ($args ? (@$args) : (0)));
+    my $return;
+    eval {
+        $conn->evalsha($sha, ($args ? (@$args) : (0)));
+        1;
+    } or do {
+        croak("redis evalsha failed: $@");
+    };
+
+    return $return;
 }
 
 sub register_file {
@@ -93,6 +106,18 @@ sub register_file {
 sub scripts {
     my ($self) = @_;
     return keys %{ $self->_script_cache };
+}
+
+sub flush_all_scripts {
+    my ($self) = @_;
+    eval {
+        $self->redis_conn->script_flush();
+        1;
+    } or do {
+        croak "redis script_flush failed: $@";
+    };
+    $self->{_script_cache} = {};
+    return $self;
 }
 
 1;
@@ -117,10 +142,10 @@ Redis::ScriptCache - Cached Lua scripts on a Redis server
     redis.call('set', 'temp', x);
     return x;
   };
-  my $script_name = $cache->register_script("myscript", $script);
+  my $script_name = $cache->register_script('myscript', $script);
   
   # later:
-  my ($value) = $cache->run_script("myscript", [1, "somekey"]);
+  my ($value) = $cache->run_script('myscript', [1, 'somekey']);
 
   # alternatively, if you have a script_dir
   my $cache = Redis::ScriptCache->new(
@@ -129,7 +154,7 @@ Redis::ScriptCache - Cached Lua scripts on a Redis server
   );
   $cache->register_all_scripts();
   # path/to/lua/scripts/*.lua gets registered
-  $cache->run_script("myscript1", [1, "somekey"]); # myscript1.lua
+  $cache->run_script('myscript1', [1, 'somekey']); # myscript1.lua
 
 =head1 DESCRIPTION
 
