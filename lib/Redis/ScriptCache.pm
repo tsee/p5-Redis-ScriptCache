@@ -5,7 +5,10 @@ use warnings;
 our $VERSION = '0.02';
 
 use File::Basename;
-use File::Spec;
+use File::Spec qw(
+    catdir
+    splitdir
+);
 use Carp;
 
 use Class::XSAccessor {
