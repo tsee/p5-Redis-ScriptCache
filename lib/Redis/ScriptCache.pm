@@ -236,6 +236,10 @@ select script on disk.
 
 Returns an array of all scripts registered in the script cache.
 
+=head2 flush_all_scripts
+
+Flushes the Redis script cache, and the local script cache.
+
 =head1 SEE ALSO
 
 L<Redis>
@@ -248,8 +252,10 @@ Steffen Mueller, C<smueller@cpan.org>
 
 =head1 CONTRIBUTORS
 
-Ifty Haque, C<iftekhar@cpan.org>
+Iftekharul Haque, C<iftekhar@cpan.org>
+
 Tom Rathborne, C<lsd@acm.org>
+
 Omar Othman, C<omar.m.othman@gmail.com>
 
 =head1 COPYRIGHT AND LICENSE
