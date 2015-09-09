@@ -65,8 +65,9 @@ sub register_script {
     return $script_name
         if exists $self->{_script_cache}->{$script_name};
 
+    my $sha;
     eval {
-        my $sha = $self->redis_conn->script_load($$script_ref);
+        $sha = $self->redis_conn->script_load($$script_ref);
         1;
     } or do {
         croak("redis script_load failed: $@");
@@ -86,7 +87,7 @@ sub run_script {
 
     my $return;
     eval {
-        $conn->evalsha($sha, ($args ? (@$args) : (0)));
+        $return = $conn->evalsha($sha, ($args ? (@$args) : (0)));
         1;
     } or do {
         croak("redis evalsha failed: $@");
