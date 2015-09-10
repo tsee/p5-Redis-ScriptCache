@@ -9,7 +9,8 @@ WriteMakefile(
       'Carp' => '0',
       'Redis' => '1.955',
       'Class::XSAccessor' => '1.12',
-      'Digest::SHA1' => '0',
+      'Test::Deep' => '0',
+      'Test::More' => '0.095',
     }, # e.g., Module::Name => 1.1
     ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
       (ABSTRACT_FROM  => 'lib/Redis/ScriptCache.pm', # retrieve abstract from module

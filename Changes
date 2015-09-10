@@ -1,4 +1,15 @@
-Revision history for Perl extension IPC::ConcurrencyLimit::Lock::Redis
+Revision history for Perl extension Redis::ScriptCache
+
+0.02  Thu Sep 10 10:36 2015
+  - not fully backwards compatible anymore
+  - run_script doesn't take SHA1s anymore, but script_name as specified by
+    register_script, so the caller no longer needs to keep track of sha1s
+  - better test suite
+  - script_dir capability, either in new() or in register_all_scripts(), so
+    register_file now possible as well as register_script
+  - script_cache checks are all local, no more Redis roundtrips to check for
+    script existence
+  - flush_all_scripts() option, to flush remote Redis and local script_cache
 
 0.01  Fri Oct 12 15:00 2012
   - original version
