@@ -1,5 +1,8 @@
 Revision history for Perl extension Redis::ScriptCache
 
+0.03  Thu Sep 10 15:48 2015
+  - Fixed META files for proper dependency declaration
+
 0.02  Thu Sep 10 10:36 2015
   - not fully backwards compatible anymore
   - run_script doesn't take SHA1s anymore, but script_name as specified by
