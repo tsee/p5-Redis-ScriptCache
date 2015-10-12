@@ -35,7 +35,7 @@ eval {
   exit(0);
 };
 
-plan tests => 10;
+plan tests => 12;
 
 my $cache = Redis::ScriptCache->new(redis_conn => $conn);
 isa_ok($cache, "Redis::ScriptCache");
@@ -86,5 +86,12 @@ $res = $cache->run_script('test', [0]);
 is($res, 2, "run script with args works");
 
 my @script_names = $cache->register_all_scripts();
-cmp_deeply(\@script_names, bag( 'test2', 'test' ), "load_scripts works for good scripts");
+cmp_deeply(\@script_names, bag( 'test3', 'test2', 'test' ), "load_scripts works for good scripts");
 
+use Data::Printer;
+$res = $cache->run_script('test3');
+my @output = ( 1, 2, 3 );
+cmp_deeply($res, \@output, "return arrayref");
+
+my @res = $cache->run_script('test3');
+cmp_deeply(\@res, \@output, "return array");

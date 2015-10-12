@@ -85,15 +85,7 @@ sub run_script {
 
     croak("Unknown script $script_name") if !$sha;
 
-    my $return;
-    eval {
-        $return = $conn->evalsha($sha, ($args ? (@$args) : (0)));
-        1;
-    } or do {
-        croak("redis evalsha failed: $@");
-    };
-
-    return $return;
+    return $conn->evalsha($sha, ($args ? (@$args) : (0)));
 }
 
 sub register_file {
