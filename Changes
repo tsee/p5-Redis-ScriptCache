@@ -1,5 +1,8 @@
 Revision history for Perl extension Redis::ScriptCache
 
+0.04  Mon Oct 12 15:11 2015
+  - Fixed a bug in run_script for context-aware returns
+
 0.03  Thu Sep 10 15:48 2015
   - Fixed META files for proper dependency declaration
 
