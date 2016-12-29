@@ -1,5 +1,9 @@
 Revision history for Perl extension Redis::ScriptCache
 
+{{$NEXT}}
+  - load scripts on demand by trying evalsha first, falling back to eval so
+    cached scripts survive a redis flush/crash
+
 0.04  Mon Oct 12 15:11 2015
   - Fixed a bug in run_script for context-aware returns
 

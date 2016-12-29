@@ -6,10 +6,10 @@ Redis::ScriptCache - Cached Lua scripts on a Redis server
 
     use Redis;
     use Redis::ScriptCache;
-    
+
     my $conn = Redis->new(server => ...);
     my $cache = Redis::ScriptCache->new(redis_conn => $conn);
-    
+
     # some Lua script to execute on the server
     my $script = q{
       local x = redis.call('get', KEYS[1]);
@@ -17,7 +17,7 @@ Redis::ScriptCache - Cached Lua scripts on a Redis server
       return x;
     };
     my $script_name = $cache->register_script('myscript', $script);
-    
+
     # later:
     my ($value) = $cache->run_script('myscript', [1, 'somekey']);
 
@@ -128,13 +128,15 @@ Tom Rathborne, `lsd@acm.org`
 
 Omar Othman, `omar.m.othman@gmail.com`
 
+Marc Mims, `marc@questright.com`
+
 # COPYRIGHT AND LICENSE
 
-    (C) 2012 Steffen Mueller. All rights reserved.
-    
+    (C) 2012-2016 Steffen Mueller. All rights reserved.
+
     This code is available under the same license as Perl version
     5.8.1 or higher.
-    
+
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
