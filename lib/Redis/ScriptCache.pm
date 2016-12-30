@@ -1,8 +1,9 @@
 package Redis::ScriptCache;
 use strict;
 use warnings;
+use 5.10.0;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 use File::Basename;
 use File::Spec qw(
@@ -10,6 +11,7 @@ use File::Spec qw(
     splitdir
 );
 use Carp;
+use Digest::SHA1 'sha1_hex';
 
 use Class::XSAccessor {
     getters => [qw(
@@ -61,31 +63,41 @@ sub register_all_scripts {
 
 sub register_script {
     my ($self, $script_name, $script) = @_;
-    my $script_ref = ref($script) ? $script : \$script;
-    return $script_name
-        if exists $self->{_script_cache}->{$script_name};
+    $script = $$script if ref($script);
 
-    my $sha;
-    eval {
-        $sha = $self->redis_conn->script_load($$script_ref);
-        1;
-    } or do {
-        croak("redis script_load failed: $@");
-    };
-    $self->{_script_cache}->{$script_name} = $sha;
+    $self->{_script_cache}{$script_name} = [ sha1_hex($script), $script ];
 
     return $script_name;
 }
 
 sub run_script {
     my ($self, $script_name, $args) = @_;
-    
+
     my $conn = $self->redis_conn;
-    my $sha = $self->_script_cache->{$script_name};
+    my $script = $self->_script_cache->{$script_name}
+        // croak("Unknown script $script_name");
 
-    croak("Unknown script $script_name") if !$sha;
+    my @result;
+    my $try = sub {
+        $conn->evalsha($$script[0], $args ? @$args : (0));
+    };
+    my $wantarray = wantarray;
+    if ( $wantarray ) {
+        @result = eval { $try->() };
+    }
+    elsif ( defined $wantarray ) {
+        $result[0] = eval { $try->() };
+    }
+    else {
+        eval { $try->() };
+    }
+    if ( $@ ) {
+        croak $@ unless $@ =~ /NOSCRIPT/;
+        return $conn->eval($$script[1], $args ? @$args : (0));
+    };
 
-    return $conn->evalsha($sha, ($args ? (@$args) : (0)));
+    return unless defined $wantarray;
+    return $wantarray ? @result : $result[0];
 }
 
 sub register_file {
@@ -108,11 +120,11 @@ sub flush_all_scripts {
     my ($self) = @_;
     eval {
         $self->redis_conn->script_flush();
-        1;
-    } or do {
+        $self->{_script_cache} = {};
+    };
+    if ( $@ ) {
         croak "redis script_flush failed: $@";
     };
-    $self->{_script_cache} = {};
     return $self;
 }
 
@@ -128,10 +140,10 @@ Redis::ScriptCache - Cached Lua scripts on a Redis server
 
   use Redis;
   use Redis::ScriptCache;
-  
+
   my $conn = Redis->new(server => ...);
   my $cache = Redis::ScriptCache->new(redis_conn => $conn);
-  
+
   # some Lua script to execute on the server
   my $script = q{
     local x = redis.call('get', KEYS[1]);
@@ -139,7 +151,7 @@ Redis::ScriptCache - Cached Lua scripts on a Redis server
     return x;
   };
   my $script_name = $cache->register_script('myscript', $script);
-  
+
   # later:
   my ($value) = $cache->run_script('myscript', [1, 'somekey']);
 
@@ -250,13 +262,15 @@ Tom Rathborne, C<lsd@acm.org>
 
 Omar Othman, C<omar.m.othman@gmail.com>
 
+Marc Mims, C<marc@questright.com>
+
 =head1 COPYRIGHT AND LICENSE
 
- (C) 2012 Steffen Mueller. All rights reserved.
- 
+ (C) 2012-2016 Steffen Mueller. All rights reserved.
+
  This code is available under the same license as Perl version
  5.8.1 or higher.
- 
+
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
