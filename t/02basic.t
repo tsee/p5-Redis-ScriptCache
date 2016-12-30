@@ -37,6 +37,9 @@ eval {
 
 plan tests => 12;
 
+# start with no scripts to test load on demand
+$conn->script_flush;
+
 my $cache = Redis::ScriptCache->new(redis_conn => $conn);
 isa_ok($cache, "Redis::ScriptCache");
 
@@ -60,11 +63,11 @@ is( $script_name, 'script_name', "register_script 'script_name' with scalar ref"
 
 # test register_file
 # because script_dir is already declared, 't/lua' is implicit
-$script_name = $cache->register_file('test.lua'); 
+$script_name = $cache->register_file('test.lua');
 is( $script_name, 'test', "register_file 'test' (default case with script_dir with no trailing slash)");
 
 # repeat, testing that re-registration works OK
-$script_name = $cache->register_file('test.lua'); 
+$script_name = $cache->register_file('test.lua');
 is( $script_name, 'test', "re-register_file 'test'");
 
 # create an object with a trailing slash in script_dir, and then register
@@ -72,7 +75,7 @@ $cache = Redis::ScriptCache->new(
     redis_conn => $conn,
     script_dir => 't/lua/',
 );
-$script_name = $cache->register_file('test.lua'); 
+$script_name = $cache->register_file('test.lua');
 is( $script_name, 'test', "register_file 'test' with script_dir with trailing slash");
 
 # TODO: add test-cases for invalid file-paths

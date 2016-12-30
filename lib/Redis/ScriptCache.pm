@@ -12,7 +12,6 @@ use File::Spec qw(
 );
 use Carp;
 use Digest::SHA1 'sha1_hex';
-use Try::Tiny;
 
 use Class::XSAccessor {
     getters => [qw(
@@ -78,13 +77,27 @@ sub run_script {
     my $script = $self->_script_cache->{$script_name}
         // croak("Unknown script $script_name");
 
-    try {
+    my @result;
+    my $try = sub {
         $conn->evalsha($$script[0], $args ? @$args : (0));
-    }
-    catch {
-        croak $_ unless /NOSCRIPT/;
-        $conn->eval($$script[1], $args ? @$args : (0));
     };
+    my $wantarray = wantarray;
+    if ( $wantarray ) {
+        @result = eval { $try->() };
+    }
+    elsif ( defined $wantarray ) {
+        $result[0] = eval { $try->() };
+    }
+    else {
+        eval { $try->() };
+    }
+    if ( $@ ) {
+        croak $@ unless $@ =~ /NOSCRIPT/;
+        return $conn->eval($$script[1], $args ? @$args : (0));
+    };
+
+    return unless defined $wantarray;
+    return $wantarray ? @result : $result[0];
 }
 
 sub register_file {
@@ -105,12 +118,12 @@ sub scripts {
 
 sub flush_all_scripts {
     my ($self) = @_;
-    try {
+    eval {
         $self->redis_conn->script_flush();
         $self->{_script_cache} = {};
-    }
-    catch {
-        croak "redis script_flush failed: $_";
+    };
+    if ( $@ ) {
+        croak "redis script_flush failed: $@";
     };
     return $self;
 }
